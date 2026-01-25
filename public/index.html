@@ -13,12 +13,12 @@
   
   <header class="bg-white border-b sticky top-0 z-10">
     <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-      <h1 class="text-xl font-semibold flex items-center gap-2">👥 Personal CRM</h1>
+      <h1 class="text-xl font-semibold flex items-center gap-2">👥 People</h1>
       <div class="flex items-center gap-4">
-        <input type="text" id="search" placeholder="Search people..." 
-               class="px-3 py-2 border rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="search" placeholder="Search..." 
+               class="px-3 py-2 border rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500">
         <button onclick="showAddModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
-          + Add Person
+          + Add
         </button>
       </div>
     </div>
@@ -26,7 +26,7 @@
 
   <main class="max-w-4xl mx-auto px-6 py-8">
     <!-- Stats -->
-    <div class="grid grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-3 gap-4 mb-8">
       <div class="bg-white rounded-xl p-4 border text-center">
         <p class="text-2xl font-bold text-blue-600" id="stat-people">0</p>
         <p class="text-xs text-gray-500 uppercase">People</p>
@@ -36,20 +36,13 @@
         <p class="text-xs text-gray-500 uppercase">Notes</p>
       </div>
       <div class="bg-white rounded-xl p-4 border text-center">
-        <p class="text-2xl font-bold text-amber-600" id="stat-followups">0</p>
-        <p class="text-xs text-gray-500 uppercase">Follow-ups</p>
-      </div>
-      <div class="bg-white rounded-xl p-4 border text-center">
-        <p class="text-2xl font-bold text-purple-600" id="stat-today">0</p>
-        <p class="text-xs text-gray-500 uppercase">Today</p>
+        <p class="text-2xl font-bold text-purple-600" id="stat-relations">0</p>
+        <p class="text-xs text-gray-500 uppercase">Relations</p>
       </div>
     </div>
 
     <!-- People List -->
     <div class="bg-white rounded-xl border">
-      <div class="px-6 py-4 border-b">
-        <h2 class="font-semibold">People</h2>
-      </div>
       <div id="people-list" class="divide-y">
         <div class="px-6 py-8 text-center text-gray-400">Loading...</div>
       </div>
@@ -61,53 +54,57 @@
     <div class="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-6 py-4 border-b flex items-center justify-between">
         <h3 class="font-semibold" id="modal-title">Add Person</h3>
-        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
       </div>
       <form id="person-form" class="px-6 py-4 space-y-4">
         <input type="hidden" id="person-id">
         <div>
           <label class="block text-sm font-medium mb-1">Name *</label>
-          <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg">
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1">Nickname</label>
-            <input type="text" id="nickname" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="nickname" class="w-full px-3 py-2 border rounded-lg">
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Relationship</label>
-            <input type="text" id="relationship" placeholder="Friend, Colleague..." class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="relationship" placeholder="Friend, Colleague..." class="w-full px-3 py-2 border rounded-lg">
           </div>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">How we met</label>
-          <input type="text" id="how_we_met" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <input type="text" id="how_we_met" class="w-full px-3 py-2 border rounded-lg">
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Location</label>
-            <input type="text" id="location" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="block text-sm font-medium mb-1">Birthday</label>
+            <input type="text" id="birthday" placeholder="MM/DD" class="w-full px-3 py-2 border rounded-lg">
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1">Birthday</label>
-            <input type="text" id="birthday" placeholder="MM/DD" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label class="block text-sm font-medium mb-1">Location</label>
+            <input type="text" id="location" class="w-full px-3 py-2 border rounded-lg">
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1">Company</label>
-            <input type="text" id="company" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="company" class="w-full px-3 py-2 border rounded-lg">
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Job Title</label>
-            <input type="text" id="job_title" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="text" id="job_title" class="w-full px-3 py-2 border rounded-lg">
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium mb-1">Notes</label>
-          <textarea id="notes" rows="3" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          <label class="block text-sm font-medium mb-1">School</label>
+          <input type="text" id="school" class="w-full px-3 py-2 border rounded-lg">
         </div>
-        <div class="flex justify-end gap-2 pt-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Notes</label>
+          <textarea id="notes" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
           <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
           <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
         </div>
@@ -119,8 +116,11 @@
   <div id="detail-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
     <div class="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
       <div class="px-6 py-4 border-b flex items-center justify-between">
-        <h3 class="font-semibold" id="detail-name">Person</h3>
-        <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+        <h3 class="font-semibold text-lg" id="detail-name">Person</h3>
+        <div class="flex items-center gap-2">
+          <button onclick="editCurrentPerson()" class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+          <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
+        </div>
       </div>
       <div id="detail-content" class="px-6 py-4">Loading...</div>
     </div>
@@ -128,13 +128,13 @@
 
   <script>
     const API = '';
+    let currentPersonId = null;
     
     async function loadStats() {
       const stats = await fetch(`${API}/api/stats`).then(r => r.json());
       document.getElementById('stat-people').textContent = stats.total_people;
       document.getElementById('stat-notes').textContent = stats.total_notes;
-      document.getElementById('stat-followups').textContent = stats.pending_followups;
-      document.getElementById('stat-today').textContent = stats.interactions_today;
+      document.getElementById('stat-relations').textContent = stats.total_relations;
     }
     
     async function loadPeople(search = '') {
@@ -143,88 +143,110 @@
       const list = document.getElementById('people-list');
       
       if (people.length === 0) {
-        list.innerHTML = '<div class="px-6 py-8 text-center text-gray-400">No people yet. Add someone!</div>';
+        list.innerHTML = '<div class="px-6 py-8 text-center text-gray-400">No one yet. Add someone!</div>';
         return;
       }
       
       list.innerHTML = people.map(p => `
         <div class="px-6 py-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between" onclick="showPerson(${p.id})">
           <div>
-            <p class="font-medium">${p.name}${p.nickname ? ` <span class="text-gray-400">(${p.nickname})</span>` : ''}</p>
-            <p class="text-sm text-gray-500">${[p.relationship, p.company].filter(Boolean).join(' · ') || 'No details'}</p>
+            <p class="font-medium">${p.name}${p.nickname ? ` <span class="text-gray-400 text-sm">(${p.nickname})</span>` : ''}</p>
+            <p class="text-sm text-gray-500">${[p.relationship, p.company, p.location].filter(Boolean).join(' · ') || ''}</p>
           </div>
-          <div class="flex gap-2">
-            <button onclick="event.stopPropagation(); editPerson(${p.id})" class="text-gray-400 hover:text-blue-600">Edit</button>
-          </div>
+          ${p.birthday ? `<span class="text-sm text-gray-400">🎂 ${p.birthday}</span>` : ''}
         </div>
       `).join('');
     }
     
     async function showPerson(id) {
+      currentPersonId = id;
       const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
       document.getElementById('detail-name').textContent = data.name;
       
-      let html = `
-        <div class="space-y-6">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            ${data.relationship ? `<div><span class="text-gray-500">Relationship:</span> ${data.relationship}</div>` : ''}
-            ${data.how_we_met ? `<div><span class="text-gray-500">How we met:</span> ${data.how_we_met}</div>` : ''}
-            ${data.location ? `<div><span class="text-gray-500">Location:</span> ${data.location}</div>` : ''}
-            ${data.company ? `<div><span class="text-gray-500">Work:</span> ${data.job_title ? data.job_title + ' at ' : ''}${data.company}</div>` : ''}
-            ${data.birthday ? `<div><span class="text-gray-500">Birthday:</span> ${data.birthday}</div>` : ''}
-          </div>
-      `;
+      let html = '<div class="space-y-6">';
       
-      if (data.relations && data.relations.length > 0) {
-        html += `
-          <div>
-            <h4 class="font-medium mb-2">👨‍👩‍👧‍👦 Family & Relations</h4>
-            <div class="space-y-1 text-sm">
-              ${data.relations.map(r => `<div>• <strong>${r.relation_type}:</strong> ${r.name}${r.age ? ` (${r.age})` : ''}${r.notes ? ` — ${r.notes}` : ''}</div>`).join('')}
-            </div>
-          </div>
-        `;
+      // Basic info
+      const fields = [
+        data.relationship && `<span class="text-gray-500">Relationship:</span> ${data.relationship}`,
+        data.how_we_met && `<span class="text-gray-500">Met:</span> ${data.how_we_met}`,
+        data.birthday && `<span class="text-gray-500">Birthday:</span> ${data.birthday}`,
+        data.location && `<span class="text-gray-500">Location:</span> ${data.location}`,
+        (data.company || data.job_title) && `<span class="text-gray-500">Work:</span> ${[data.job_title, data.company].filter(Boolean).join(' at ')}`,
+        data.school && `<span class="text-gray-500">School:</span> ${data.school}`,
+      ].filter(Boolean);
+      
+      if (fields.length > 0) {
+        html += `<div class="grid grid-cols-2 gap-2 text-sm">${fields.map(f => `<div>${f}</div>`).join('')}</div>`;
       }
       
-      if (data.followups && data.followups.length > 0) {
-        html += `
-          <div>
-            <h4 class="font-medium mb-2">📋 Follow up on</h4>
-            <div class="space-y-1 text-sm">
-              ${data.followups.map(f => `<div class="flex items-center gap-2">
-                <input type="checkbox" onchange="completeFollowup(${f.id})" class="rounded">
-                <span>${f.item}</span>
-              </div>`).join('')}
-            </div>
+      // Relations
+      const allRelations = [...(data.relations || []), ...(data.reverseRelations || []).map(r => ({
+        ...r, relation_type: r.reverse_type, name: r.from_name, related_person_id: r.from_id
+      }))];
+      
+      if (allRelations.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Family & Relations</h4>
+          <div class="space-y-1 text-sm">
+            ${allRelations.map(r => `
+              <div class="flex items-center gap-2">
+                <span class="text-gray-500 capitalize">${r.relation_type}:</span>
+                ${r.related_person_id || r.linked_id ? 
+                  `<a href="#" onclick="event.preventDefault(); showPerson(${r.related_person_id || r.linked_id})" class="text-blue-600 hover:underline">${r.linked_name || r.name}</a>` : 
+                  `<span>${r.name}</span>`}
+                ${r.age ? `<span class="text-gray-400">(${r.age})</span>` : ''}
+              </div>
+            `).join('')}
           </div>
-        `;
+        </div>`;
       }
       
+      // Notes
       if (data.notes && data.notes.length > 0) {
-        html += `
-          <div>
-            <h4 class="font-medium mb-2">📝 Notes</h4>
-            <div class="space-y-2 text-sm">
-              ${data.notes.map(n => `<div class="bg-gray-50 p-3 rounded-lg">
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Notes</h4>
+          <div class="space-y-2 text-sm">
+            ${data.notes.map(n => `
+              <div class="bg-gray-50 p-3 rounded-lg">
                 <p>${n.note}</p>
                 <p class="text-xs text-gray-400 mt-1">${n.date || new Date(n.created_at).toLocaleDateString()}</p>
-              </div>`).join('')}
-            </div>
+              </div>
+            `).join('')}
           </div>
-        `;
+        </div>`;
       }
       
+      // Interactions
+      if (data.interactions && data.interactions.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Recent Interactions</h4>
+          <div class="space-y-1 text-sm">
+            ${data.interactions.map(i => `
+              <div class="text-gray-600">
+                <span class="text-gray-400">${i.date}</span> · ${i.interaction_type}${i.notes ? `: ${i.notes}` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Actions
       html += `
-        <div class="flex gap-2 pt-4 border-t">
-          <button onclick="addNotePrompt(${id})" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">+ Add Note</button>
-          <button onclick="addRelationPrompt(${id})" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">+ Add Relation</button>
-          <button onclick="addFollowupPrompt(${id})" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">+ Add Follow-up</button>
+        <div class="flex flex-wrap gap-2 pt-4 border-t">
+          <button onclick="addNotePrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Note</button>
+          <button onclick="addRelationPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Relation</button>
+          <button onclick="addInteractionPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Interaction</button>
         </div>
       </div>`;
       
       document.getElementById('detail-content').innerHTML = html;
       document.getElementById('detail-modal').classList.remove('hidden');
       document.getElementById('detail-modal').classList.add('flex');
+    }
+    
+    function editCurrentPerson() {
+      closeDetailModal();
+      editPerson(currentPersonId);
     }
     
     function showAddModal() {
@@ -239,8 +261,9 @@
       const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
       document.getElementById('modal-title').textContent = 'Edit Person';
       document.getElementById('person-id').value = id;
-      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','notes'].forEach(f => {
-        document.getElementById(f).value = data[f] || '';
+      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
+        const el = document.getElementById(f);
+        if (el) el.value = data[f] || '';
       });
       document.getElementById('modal').classList.remove('hidden');
       document.getElementById('modal').classList.add('flex');
@@ -260,8 +283,9 @@
       e.preventDefault();
       const id = document.getElementById('person-id').value;
       const data = {};
-      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','notes'].forEach(f => {
-        data[f] = document.getElementById(f).value;
+      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
+        const el = document.getElementById(f);
+        if (el) data[f] = el.value;
       });
       
       if (id) {
@@ -284,31 +308,36 @@
     }
     
     async function addRelationPrompt(personId) {
-      const type = prompt('Relation type (e.g., spouse, child, parent):');
+      const type = prompt('Relation type (spouse, child, parent, sibling, friend):');
       if (!type) return;
       const name = prompt('Name:');
       if (!name) return;
       const age = prompt('Age (optional):');
-      await fetch(`${API}/api/people/${personId}/relations`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ relation_type: type, name, age: age ? parseInt(age) : null }) });
+      await fetch(`${API}/api/people/${personId}/relations`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ relation_type: type, name, age: age ? parseInt(age) : null }) 
+      });
       showPerson(personId);
-    }
-    
-    async function addFollowupPrompt(personId) {
-      const item = prompt('What to follow up on:');
-      if (item) {
-        await fetch(`${API}/api/people/${personId}/followups`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ item }) });
-        showPerson(personId);
-        loadStats();
-      }
-    }
-    
-    async function completeFollowup(id) {
-      await fetch(`${API}/api/followups/${id}/complete`, { method: 'PUT' });
       loadStats();
     }
     
+    async function addInteractionPrompt(personId) {
+      const type = prompt('Type (coffee, drinks, dinner, call, etc):');
+      if (!type) return;
+      const notes = prompt('Notes (optional):');
+      await fetch(`${API}/api/people/${personId}/interactions`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ interaction_type: type, notes }) 
+      });
+      showPerson(personId);
+    }
+    
+    let searchTimeout;
     document.getElementById('search').oninput = (e) => {
-      loadPeople(e.target.value);
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => loadPeople(e.target.value), 200);
     };
     
     loadStats();

@@ -19,7 +19,10 @@ function getToday() {
 async function initDb() {
   const client = await pool.connect();
   try {
-    // People table
+    // Drop old tables if schema changed significantly
+    // await client.query('DROP TABLE IF EXISTS crm_followups, crm_relations, crm_notes, crm_interactions, crm_people CASCADE');
+    
+    // People table - comprehensive
     await client.query(`
       CREATE TABLE IF NOT EXISTS crm_people (
         id SERIAL PRIMARY KEY,
@@ -33,24 +36,32 @@ async function initDb() {
         phone TEXT,
         company TEXT,
         job_title TEXT,
+        school TEXT,
         notes TEXT,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
     
-    // Relations (family members, connections to person)
+    // Add columns if they don't exist (for existing tables)
+    await client.query(`ALTER TABLE crm_people ADD COLUMN IF NOT EXISTS school TEXT`);
+    
+    // Relations - can link to another person
     await client.query(`
       CREATE TABLE IF NOT EXISTS crm_relations (
         id SERIAL PRIMARY KEY,
         person_id INTEGER REFERENCES crm_people(id) ON DELETE CASCADE,
+        related_person_id INTEGER REFERENCES crm_people(id) ON DELETE SET NULL,
         relation_type TEXT NOT NULL,
-        name TEXT NOT NULL,
+        name TEXT,
         age INTEGER,
         notes TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    
+    // Add related_person_id if doesn't exist
+    await client.query(`ALTER TABLE crm_relations ADD COLUMN IF NOT EXISTS related_person_id INTEGER REFERENCES crm_people(id) ON DELETE SET NULL`);
     
     // Notes/updates about a person
     await client.query(`
@@ -61,18 +72,6 @@ async function initDb() {
         note_type TEXT DEFAULT 'general',
         date TEXT,
         created_at TIMESTAMP DEFAULT NOW()
-      )
-    `);
-    
-    // Follow-up items
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS crm_followups (
-        id SERIAL PRIMARY KEY,
-        person_id INTEGER REFERENCES crm_people(id) ON DELETE CASCADE,
-        item TEXT NOT NULL,
-        completed BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT NOW(),
-        completed_at TIMESTAMP
       )
     `);
     
@@ -97,7 +96,6 @@ async function initDb() {
   }
 }
 
-// Helper functions
 async function queryOne(sql, params = []) {
   const { rows } = await pool.query(sql, params);
   return rows[0] || null;
@@ -115,7 +113,7 @@ async function run(sql, params = []) {
 
 // ============ API Routes ============
 
-// Get all people (summary)
+// Get all people
 app.get('/api/people', async (req, res) => {
   const search = req.query.search;
   let people;
@@ -135,15 +133,36 @@ app.get('/api/people/:id', async (req, res) => {
   const person = await queryOne('SELECT * FROM crm_people WHERE id = $1', [req.params.id]);
   if (!person) return res.status(404).json({ error: 'Person not found' });
   
-  const relations = await queryAll('SELECT * FROM crm_relations WHERE person_id = $1', [req.params.id]);
+  // Get relations with linked person details
+  const relations = await queryAll(`
+    SELECT r.*, p.name as linked_name, p.id as linked_id 
+    FROM crm_relations r 
+    LEFT JOIN crm_people p ON r.related_person_id = p.id 
+    WHERE r.person_id = $1
+  `, [req.params.id]);
+  
+  // Get reverse relations (where this person is the related_person)
+  const reverseRelations = await queryAll(`
+    SELECT r.*, p.name as from_name, p.id as from_id,
+           CASE r.relation_type 
+             WHEN 'spouse' THEN 'spouse'
+             WHEN 'child' THEN 'parent'
+             WHEN 'parent' THEN 'child'
+             WHEN 'sibling' THEN 'sibling'
+             ELSE r.relation_type
+           END as reverse_type
+    FROM crm_relations r 
+    JOIN crm_people p ON r.person_id = p.id 
+    WHERE r.related_person_id = $1
+  `, [req.params.id]);
+  
   const notes = await queryAll('SELECT * FROM crm_notes WHERE person_id = $1 ORDER BY created_at DESC', [req.params.id]);
-  const followups = await queryAll('SELECT * FROM crm_followups WHERE person_id = $1 AND completed = FALSE', [req.params.id]);
   const interactions = await queryAll('SELECT * FROM crm_interactions WHERE person_id = $1 ORDER BY date DESC LIMIT 10', [req.params.id]);
   
-  res.json({ ...person, relations, notes, followups, interactions });
+  res.json({ ...person, relations, reverseRelations, notes, interactions });
 });
 
-// Briefing endpoint - get everything needed before meeting someone
+// Briefing endpoint
 app.get('/api/briefing/:nameOrId', async (req, res) => {
   const param = req.params.nameOrId;
   let person;
@@ -156,12 +175,17 @@ app.get('/api/briefing/:nameOrId', async (req, res) => {
   
   if (!person) return res.status(404).json({ error: 'Person not found' });
   
-  const relations = await queryAll('SELECT * FROM crm_relations WHERE person_id = $1', [person.id]);
+  // Get relations with linked person details
+  const relations = await queryAll(`
+    SELECT r.*, p.name as linked_name, p.birthday as linked_birthday
+    FROM crm_relations r 
+    LEFT JOIN crm_people p ON r.related_person_id = p.id 
+    WHERE r.person_id = $1
+  `, [person.id]);
+  
   const recentNotes = await queryAll('SELECT * FROM crm_notes WHERE person_id = $1 ORDER BY created_at DESC LIMIT 5', [person.id]);
-  const followups = await queryAll('SELECT * FROM crm_followups WHERE person_id = $1 AND completed = FALSE', [person.id]);
   const lastInteraction = await queryOne('SELECT * FROM crm_interactions WHERE person_id = $1 ORDER BY date DESC LIMIT 1', [person.id]);
   
-  // Build briefing
   const briefing = {
     person: {
       name: person.name,
@@ -169,12 +193,20 @@ app.get('/api/briefing/:nameOrId', async (req, res) => {
       relationship: person.relationship,
       how_we_met: person.how_we_met,
       location: person.location,
+      birthday: person.birthday,
       company: person.company,
-      job_title: person.job_title
+      job_title: person.job_title,
+      school: person.school
     },
-    family: relations.map(r => ({ type: r.relation_type, name: r.name, age: r.age, notes: r.notes })),
+    family: relations.map(r => ({ 
+      type: r.relation_type, 
+      name: r.linked_name || r.name, 
+      age: r.age, 
+      birthday: r.linked_birthday,
+      notes: r.notes,
+      person_id: r.related_person_id
+    })),
     recent_updates: recentNotes.map(n => ({ note: n.note, type: n.note_type, date: n.date || n.created_at })),
-    follow_up_on: followups.map(f => f.item),
     last_interaction: lastInteraction ? { type: lastInteraction.interaction_type, date: lastInteraction.date, notes: lastInteraction.notes } : null
   };
   
@@ -183,21 +215,21 @@ app.get('/api/briefing/:nameOrId', async (req, res) => {
 
 // Add a new person
 app.post('/api/people', async (req, res) => {
-  const { name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, notes } = req.body;
+  const { name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, school, notes } = req.body;
   const result = await run(
-    `INSERT INTO crm_people (name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, notes)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
-    [name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, notes]
+    `INSERT INTO crm_people (name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, school, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+    [name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, school, notes]
   );
   res.json({ id: result.rows[0].id, success: true });
 });
 
 // Update a person
 app.put('/api/people/:id', async (req, res) => {
-  const { name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, notes } = req.body;
+  const { name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, school, notes } = req.body;
   await run(
-    `UPDATE crm_people SET name=$1, nickname=$2, relationship=$3, how_we_met=$4, location=$5, birthday=$6, email=$7, phone=$8, company=$9, job_title=$10, notes=$11, updated_at=NOW() WHERE id=$12`,
-    [name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, notes, req.params.id]
+    `UPDATE crm_people SET name=$1, nickname=$2, relationship=$3, how_we_met=$4, location=$5, birthday=$6, email=$7, phone=$8, company=$9, job_title=$10, school=$11, notes=$12, updated_at=NOW() WHERE id=$13`,
+    [name, nickname, relationship, how_we_met, location, birthday, email, phone, company, job_title, school, notes, req.params.id]
   );
   res.json({ success: true });
 });
@@ -208,17 +240,33 @@ app.delete('/api/people/:id', async (req, res) => {
   res.json({ success: true });
 });
 
-// Add a relation to a person
+// Add a relation (can link to existing person or just store name)
 app.post('/api/people/:id/relations', async (req, res) => {
-  const { relation_type, name, age, notes } = req.body;
+  const { relation_type, name, related_person_id, age, notes } = req.body;
   const result = await run(
-    'INSERT INTO crm_relations (person_id, relation_type, name, age, notes) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-    [req.params.id, relation_type, name, age, notes]
+    'INSERT INTO crm_relations (person_id, related_person_id, relation_type, name, age, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+    [req.params.id, related_person_id || null, relation_type, name, age, notes]
   );
   res.json({ id: result.rows[0].id, success: true });
 });
 
-// Add a note about a person
+// Update a relation
+app.put('/api/relations/:id', async (req, res) => {
+  const { relation_type, name, related_person_id, age, notes } = req.body;
+  await run(
+    'UPDATE crm_relations SET relation_type=$1, name=$2, related_person_id=$3, age=$4, notes=$5 WHERE id=$6',
+    [relation_type, name, related_person_id, age, notes, req.params.id]
+  );
+  res.json({ success: true });
+});
+
+// Delete a relation
+app.delete('/api/relations/:id', async (req, res) => {
+  await run('DELETE FROM crm_relations WHERE id = $1', [req.params.id]);
+  res.json({ success: true });
+});
+
+// Add a note
 app.post('/api/people/:id/notes', async (req, res) => {
   const { note, note_type, date } = req.body;
   const result = await run(
@@ -228,19 +276,9 @@ app.post('/api/people/:id/notes', async (req, res) => {
   res.json({ id: result.rows[0].id, success: true });
 });
 
-// Add a follow-up item
-app.post('/api/people/:id/followups', async (req, res) => {
-  const { item } = req.body;
-  const result = await run(
-    'INSERT INTO crm_followups (person_id, item) VALUES ($1, $2) RETURNING id',
-    [req.params.id, item]
-  );
-  res.json({ id: result.rows[0].id, success: true });
-});
-
-// Complete a follow-up
-app.put('/api/followups/:id/complete', async (req, res) => {
-  await run('UPDATE crm_followups SET completed = TRUE, completed_at = NOW() WHERE id = $1', [req.params.id]);
+// Delete a note
+app.delete('/api/notes/:id', async (req, res) => {
+  await run('DELETE FROM crm_notes WHERE id = $1', [req.params.id]);
   res.json({ success: true });
 });
 
@@ -254,14 +292,14 @@ app.post('/api/people/:id/interactions', async (req, res) => {
   res.json({ id: result.rows[0].id, success: true });
 });
 
-// Search across everything
+// Search
 app.get('/api/search', async (req, res) => {
   const q = req.query.q;
   if (!q) return res.json([]);
   
   const people = await queryAll(
-    `SELECT id, name, nickname, relationship FROM crm_people 
-     WHERE LOWER(name) LIKE LOWER($1) OR LOWER(nickname) LIKE LOWER($1) OR LOWER(notes) LIKE LOWER($1)`,
+    `SELECT id, name, nickname, relationship, company FROM crm_people 
+     WHERE LOWER(name) LIKE LOWER($1) OR LOWER(nickname) LIKE LOWER($1) OR LOWER(company) LIKE LOWER($1)`,
     [`%${q}%`]
   );
   
@@ -272,18 +310,45 @@ app.get('/api/search', async (req, res) => {
 app.get('/api/stats', async (req, res) => {
   const totalPeople = await queryOne('SELECT COUNT(*) as count FROM crm_people');
   const totalNotes = await queryOne('SELECT COUNT(*) as count FROM crm_notes');
-  const pendingFollowups = await queryOne('SELECT COUNT(*) as count FROM crm_followups WHERE completed = FALSE');
-  const recentInteractions = await queryOne('SELECT COUNT(*) as count FROM crm_interactions WHERE date >= $1', [getToday()]);
+  const totalRelations = await queryOne('SELECT COUNT(*) as count FROM crm_relations');
+  const recentInteractions = await queryAll('SELECT * FROM crm_interactions ORDER BY date DESC LIMIT 5');
   
   res.json({
     total_people: parseInt(totalPeople.count),
     total_notes: parseInt(totalNotes.count),
-    pending_followups: parseInt(pendingFollowups.count),
-    interactions_today: parseInt(recentInteractions.count)
+    total_relations: parseInt(totalRelations.count),
+    recent_interactions: recentInteractions
   });
 });
 
-// Start server
+// Upcoming birthdays
+app.get('/api/birthdays', async (req, res) => {
+  // Get people with birthdays in the next 30 days
+  const people = await queryAll(`
+    SELECT id, name, birthday FROM crm_people 
+    WHERE birthday IS NOT NULL AND birthday != ''
+    ORDER BY birthday
+  `);
+  
+  const today = new Date();
+  const upcoming = people.filter(p => {
+    if (!p.birthday) return false;
+    const [month, day] = p.birthday.split('/').map(Number);
+    if (!month || !day) return false;
+    const bday = new Date(today.getFullYear(), month - 1, day);
+    if (bday < today) bday.setFullYear(today.getFullYear() + 1);
+    const daysUntil = Math.ceil((bday - today) / (1000 * 60 * 60 * 24));
+    return daysUntil <= 30;
+  }).map(p => {
+    const [month, day] = p.birthday.split('/').map(Number);
+    const bday = new Date(today.getFullYear(), month - 1, day);
+    if (bday < today) bday.setFullYear(today.getFullYear() + 1);
+    return { ...p, days_until: Math.ceil((bday - today) / (1000 * 60 * 60 * 24)) };
+  }).sort((a, b) => a.days_until - b.days_until);
+  
+  res.json(upcoming);
+});
+
 const PORT = process.env.PORT || 3000;
 initDb().then(() => {
   app.listen(PORT, '0.0.0.0', () => {
