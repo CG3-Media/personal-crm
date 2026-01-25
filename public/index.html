@@ -246,6 +246,7 @@
   <script>
     const API = '';
     let people = [];
+    let resetZoomFn = null;
     let simulation;
     
     const colors = {
@@ -373,6 +374,26 @@
         });
       svg.call(zoom);
       
+      // Function to zoom and center on a point
+      function zoomToNode(x, y) {
+        const scale = 1.8;
+        const transform = d3.zoomIdentity
+          .translate(centerX, centerY)
+          .scale(scale)
+          .translate(-x, -y);
+        svg.transition()
+          .duration(500)
+          .call(zoom.transform, transform);
+      }
+      
+      // Reset zoom
+      function resetZoom() {
+        svg.transition()
+          .duration(500)
+          .call(zoom.transform, d3.zoomIdentity.translate(centerX, centerY));
+      }
+      resetZoomFn = resetZoom;
+      
       const g = svg.append('g')
         .attr('transform', `translate(${centerX}, ${centerY})`);
       
@@ -448,7 +469,10 @@
         .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .on('mouseover', showTooltip)
         .on('mouseout', hideTooltip)
-        .on('click', (event, d) => showDetail(d));
+        .on('click', (event, d) => {
+          zoomToNode(d.x, d.y);
+          showDetail(d);
+        });
       
       planets.append('circle')
         .attr('r', d => d.radius)
@@ -600,6 +624,7 @@
     
     function closePanel() {
       document.getElementById('detail-panel').classList.remove('open');
+      if (resetZoomFn) resetZoomFn();
     }
     
     async function logInteraction(personId) {
