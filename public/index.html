@@ -298,12 +298,52 @@
         };
       }));
       
+      // Apply relationship gravity - connected people inherit proximity
+      applyRelationshipGravity();
+      
       // Get stale count
       const stale = people.filter(p => p.daysSinceContact >= 30).length;
       document.getElementById('stat-people').textContent = people.length;
       document.getElementById('stat-stale').textContent = stale;
       
       renderSolarSystem();
+    }
+    
+    function applyRelationshipGravity() {
+      // For each person, check if they're connected to someone closer
+      // If so, pull them closer (weighted average)
+      people.forEach(person => {
+        // Check reverse relations (e.g., Jameela is Marlin's spouse)
+        if (person.reverseRelations && person.reverseRelations.length > 0) {
+          person.reverseRelations.forEach(rel => {
+            const connected = people.find(p => p.id === rel.from_id);
+            if (connected && connected.daysSinceContact < person.daysSinceContact) {
+              // Pull closer - use weighted average (70% their proximity, 30% connected person's)
+              const weight = rel.relation_type === 'spouse' ? 0.4 : 0.25;
+              person.daysSinceContact = Math.round(
+                person.daysSinceContact * (1 - weight) + connected.daysSinceContact * weight
+              );
+              person.inheritedProximity = true;
+            }
+          });
+        }
+        
+        // Also check direct relations
+        if (person.relations && person.relations.length > 0) {
+          person.relations.forEach(rel => {
+            if (rel.related_person_id) {
+              const connected = people.find(p => p.id === rel.related_person_id);
+              if (connected && connected.daysSinceContact < person.daysSinceContact) {
+                const weight = rel.relation_type === 'spouse' ? 0.4 : 0.25;
+                person.daysSinceContact = Math.round(
+                  person.daysSinceContact * (1 - weight) + connected.daysSinceContact * weight
+                );
+                person.inheritedProximity = true;
+              }
+            }
+          });
+        }
+      });
     }
     
     function renderSolarSystem() {
