@@ -299,10 +299,12 @@
         };
       }));
       
-      // Filter out colleagues - they stay in list view only
+      // Filter out colleagues and manually hidden people
       people = allPeople.filter(p => {
         const rel = (p.relationship || '').toLowerCase();
-        return !rel.includes('colleague');
+        if (rel.includes('colleague')) return false;
+        if (p.hidden_from_solar) return false;
+        return true;
       });
       
       // Apply relationship gravity - connected people inherit proximity
@@ -622,6 +624,7 @@
         <button class="action-btn" onclick="logInteraction(${data.id})">+ Log Interaction</button>
         <button class="action-btn" onclick="addNote(${data.id})">+ Add Note</button>
         <a href="/list.html" class="action-btn" style="text-decoration:none; display:inline-block;">Edit in List</a>
+        <button class="action-btn" onclick="hideFromSolar(${data.id})" style="opacity:0.6">Hide from Solar</button>
       </div>`;
       
       document.getElementById('detail-content').innerHTML = html;
@@ -644,6 +647,12 @@
       });
       loadData();
       closePanel();
+    }
+    
+    async function hideFromSolar(personId) {
+      await fetch(`${API}/api/people/${personId}/toggle-solar`, { method: 'POST' });
+      closePanel();
+      loadData();
     }
     
     async function addNote(personId) {

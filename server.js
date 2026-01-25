@@ -48,6 +48,7 @@ async function initDb() {
         school TEXT,
         notes TEXT,
         photo_url TEXT,
+        hidden_from_solar BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       )
@@ -55,6 +56,7 @@ async function initDb() {
     
     // Add photo_url if not exists
     await client.query(`ALTER TABLE crm_people ADD COLUMN IF NOT EXISTS photo_url TEXT`);
+    await client.query(`ALTER TABLE crm_people ADD COLUMN IF NOT EXISTS hidden_from_solar BOOLEAN DEFAULT false`);
     
     // Relations - lightweight for kids, etc.
     await client.query(`
@@ -667,4 +669,12 @@ initDb().then(() => {
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);
+});
+
+// Toggle solar view visibility
+app.post('/api/people/:id/toggle-solar', async (req, res) => {
+  const person = await queryOne('SELECT hidden_from_solar FROM crm_people WHERE id = $1', [req.params.id]);
+  const newValue = !person?.hidden_from_solar;
+  await run('UPDATE crm_people SET hidden_from_solar = $1 WHERE id = $2', [newValue, req.params.id]);
+  res.json({ hidden_from_solar: newValue, success: true });
 });
