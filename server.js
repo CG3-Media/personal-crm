@@ -678,3 +678,9 @@ app.post('/api/people/:id/toggle-solar', async (req, res) => {
   await run('UPDATE crm_people SET hidden_from_solar = $1 WHERE id = $2', [newValue, req.params.id]);
   res.json({ hidden_from_solar: newValue, success: true });
 });
+
+// Clear all interactions (reset)
+app.delete('/api/interactions/all', async (req, res) => {
+  await run('DELETE FROM crm_interactions');
+  res.json({ success: true });
+});
