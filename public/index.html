@@ -318,11 +318,16 @@
           person.reverseRelations.forEach(rel => {
             const connected = people.find(p => p.id === rel.from_id);
             if (connected && connected.daysSinceContact < person.daysSinceContact) {
-              // Pull closer - use weighted average (70% their proximity, 30% connected person's)
-              const weight = rel.relation_type === 'spouse' ? 0.4 : 0.25;
-              person.daysSinceContact = Math.round(
-                person.daysSinceContact * (1 - weight) + connected.daysSinceContact * weight
-              );
+              // Pull closer - spouses nearly match, others get partial pull
+              if (rel.relation_type === 'spouse') {
+                // Spouse gets pulled to nearly same orbit (just slightly further)
+                person.daysSinceContact = connected.daysSinceContact + 2;
+              } else {
+                // Others get 30% pull toward connected person
+                person.daysSinceContact = Math.round(
+                  person.daysSinceContact * 0.7 + connected.daysSinceContact * 0.3
+                );
+              }
               person.inheritedProximity = true;
             }
           });
@@ -334,10 +339,13 @@
             if (rel.related_person_id) {
               const connected = people.find(p => p.id === rel.related_person_id);
               if (connected && connected.daysSinceContact < person.daysSinceContact) {
-                const weight = rel.relation_type === 'spouse' ? 0.4 : 0.25;
+                if (rel.relation_type === 'spouse') {
+                person.daysSinceContact = connected.daysSinceContact + 2;
+              } else {
                 person.daysSinceContact = Math.round(
-                  person.daysSinceContact * (1 - weight) + connected.daysSinceContact * weight
+                  person.daysSinceContact * 0.7 + connected.daysSinceContact * 0.3
                 );
+              }
                 person.inheritedProximity = true;
               }
             }
