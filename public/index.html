@@ -265,7 +265,7 @@
     }
     
     function getName(p) {
-      return p.full_name || p.name || [p.first_name, p.last_name].filter(Boolean).join(' ');
+      return p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ');
     }
     
     function daysSince(dateStr) {

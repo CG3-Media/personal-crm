@@ -53,26 +53,8 @@ async function initDb() {
       )
     `);
     
-    // Migration: add new columns if they don't exist
-    await client.query(`ALTER TABLE crm_people ADD COLUMN IF NOT EXISTS first_name TEXT`);
-    await client.query(`ALTER TABLE crm_people ADD COLUMN IF NOT EXISTS last_name TEXT`);
+    // Add photo_url if not exists
     await client.query(`ALTER TABLE crm_people ADD COLUMN IF NOT EXISTS photo_url TEXT`);
-    
-    // Migration: if 'name' column exists, migrate to first_name/last_name
-    const hasNameCol = await client.query(`
-      SELECT column_name FROM information_schema.columns 
-      WHERE table_name = 'crm_people' AND column_name = 'name'
-    `);
-    if (hasNameCol.rows.length > 0) {
-      // Migrate existing names
-      await client.query(`
-        UPDATE crm_people SET 
-          first_name = SPLIT_PART(name, ' ', 1),
-          last_name = NULLIF(TRIM(SUBSTRING(name FROM POSITION(' ' IN name))), '')
-        WHERE first_name IS NULL AND name IS NOT NULL
-      `);
-      // Don't drop the column yet for safety - we can do that later
-    }
     
     // Relations - lightweight for kids, etc.
     await client.query(`

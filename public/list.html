@@ -145,7 +145,7 @@
     let currentPersonId = null;
     
     function getName(p) {
-      return p.full_name || p.name || [p.first_name, p.last_name].filter(Boolean).join(' ');
+      return p.full_name || [p.first_name, p.last_name].filter(Boolean).join(' ');
     }
     
     async function loadStats() {
@@ -350,9 +350,8 @@
       const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
       document.getElementById('modal-title').textContent = 'Edit Person';
       document.getElementById('person-id').value = id;
-      // Handle both old and new schema
-      document.getElementById('first_name').value = data.first_name || (data.name ? data.name.split(' ')[0] : '') || '';
-      document.getElementById('last_name').value = data.last_name || (data.name ? data.name.split(' ').slice(1).join(' ') : '') || '';
+      document.getElementById('first_name').value = data.first_name || '';
+      document.getElementById('last_name').value = data.last_name || '';
       ['nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
         const el = document.getElementById(f);
         if (el) el.value = data[f] || '';
