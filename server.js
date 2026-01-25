@@ -30,9 +30,6 @@ function calculateAge(birthday) {
 async function initDb() {
   const client = await pool.connect();
   try {
-    // Fresh start - drop old tables with incompatible schema
-    await client.query(`DROP TABLE IF EXISTS crm_person_groups, crm_gift_ideas, crm_important_dates, crm_meetings, crm_interactions, crm_notes, crm_relations, crm_groups, crm_people CASCADE`);
-    
     // People table
     await client.query(`
       CREATE TABLE IF NOT EXISTS crm_people (
