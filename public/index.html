@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Personal CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  
+  <header class="bg-white border-b sticky top-0 z-10">
+    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-xl font-semibold flex items-center gap-2">👥 Personal CRM</h1>
+      <div class="flex items-center gap-4">
+        <input type="text" id="search" placeholder="Search people..." 
+               class="px-3 py-2 border rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button onclick="showAddModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+          + Add Person
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Stats -->
+    <div class="grid grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-blue-600" id="stat-people">0</p>
+        <p class="text-xs text-gray-500 uppercase">People</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-green-600" id="stat-notes">0</p>
+        <p class="text-xs text-gray-500 uppercase">Notes</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-amber-600" id="stat-followups">0</p>
+        <p class="text-xs text-gray-500 uppercase">Follow-ups</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-purple-600" id="stat-today">0</p>
+        <p class="text-xs text-gray-500 uppercase">Today</p>
+      </div>
+    </div>
+
+    <!-- People List -->
+    <div class="bg-white rounded-xl border">
+      <div class="px-6 py-4 border-b">
+        <h2 class="font-semibold">People</h2>
+      </div>
+      <div id="people-list" class="divide-y">
+        <div class="px-6 py-8 text-center text-gray-400">Loading...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b flex items-center justify-between">
+        <h3 class="font-semibold" id="modal-title">Add Person</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <form id="person-form" class="px-6 py-4 space-y-4">
+        <input type="hidden" id="person-id">
+        <div>
+          <label class="block text-sm font-medium mb-1">Name *</label>
+          <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Nickname</label>
+            <input type="text" id="nickname" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Relationship</label>
+            <input type="text" id="relationship" placeholder="Friend, Colleague..." class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">How we met</label>
+          <input type="text" id="how_we_met" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Location</label>
+            <input type="text" id="location" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Birthday</label>
+            <input type="text" id="birthday" placeholder="MM/DD" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Company</label>
+            <input type="text" id="company" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Job Title</label>
+            <input type="text" id="job_title" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Notes</label>
+          <textarea id="notes" rows="3" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-4">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Person Detail Modal -->
+  <div id="detail-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b flex items-center justify-between">
+        <h3 class="font-semibold" id="detail-name">Person</h3>
+        <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <div id="detail-content" class="px-6 py-4">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    
+    async function loadStats() {
+      const stats = await fetch(`${API}/api/stats`).then(r => r.json());
+      document.getElementById('stat-people').textContent = stats.total_people;
+      document.getElementById('stat-notes').textContent = stats.total_notes;
+      document.getElementById('stat-followups').textContent = stats.pending_followups;
+      document.getElementById('stat-today').textContent = stats.interactions_today;
+    }
+    
+    async function loadPeople(search = '') {
+      const url = search ? `${API}/api/people?search=${encodeURIComponent(search)}` : `${API}/api/people`;
+      const people = await fetch(url).then(r => r.json());
+      const list = document.getElementById('people-list');
+      
+      if (people.length === 0) {
+        list.innerHTML = '<div class="px-6 py-8 text-center text-gray-400">No people yet. Add someone!</div>';
+        return;
+      }
+      
+      list.innerHTML = people.map(p => `
+        <div class="px-6 py-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between" onclick="showPerson(${p.id})">
+          <div>
+            <p class="font-medium">${p.name}${p.nickname ? ` <span class="text-gray-400">(${p.nickname})</span>` : ''}</p>
+            <p class="text-sm text-gray-500">${[p.relationship, p.company].filter(Boolean).join(' · ') || 'No details'}</p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="event.stopPropagation(); editPerson(${p.id})" class="text-gray-400 hover:text-blue-600">Edit</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    async function showPerson(id) {
+      const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
+      document.getElementById('detail-name').textContent = data.name;
+      
+      let html = `
+        <div class="space-y-6">
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            ${data.relationship ? `<div><span class="text-gray-500">Relationship:</span> ${data.relationship}</div>` : ''}
+            ${data.how_we_met ? `<div><span class="text-gray-500">How we met:</span> ${data.how_we_met}</div>` : ''}
+            ${data.location ? `<div><span class="text-gray-500">Location:</span> ${data.location}</div>` : ''}
+            ${data.company ? `<div><span class="text-gray-500">Work:</span> ${data.job_title ? data.job_title + ' at ' : ''}${data.company}</div>` : ''}
+            ${data.birthday ? `<div><span class="text-gray-500">Birthday:</span> ${data.birthday}</div>` : ''}
+          </div>
+      `;
+      
+      if (data.relations && data.relations.length > 0) {
+        html += `
+          <div>
+            <h4 class="font-medium mb-2">👨‍👩‍👧‍👦 Family & Relations</h4>
+            <div class="space-y-1 text-sm">
+              ${data.relations.map(r => `<div>• <strong>${r.relation_type}:</strong> ${r.name}${r.age ? ` (${r.age})` : ''}${r.notes ? ` — ${r.notes}` : ''}</div>`).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      if (data.followups && data.followups.length > 0) {
+        html += `
+          <div>
+            <h4 class="font-medium mb-2">📋 Follow up on</h4>
+            <div class="space-y-1 text-sm">
+              ${data.followups.map(f => `<div class="flex items-center gap-2">
+                <input type="checkbox" onchange="completeFollowup(${f.id})" class="rounded">
+                <span>${f.item}</span>
+              </div>`).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      if (data.notes && data.notes.length > 0) {
+        html += `
+          <div>
+            <h4 class="font-medium mb-2">📝 Notes</h4>
+            <div class="space-y-2 text-sm">
+              ${data.notes.map(n => `<div class="bg-gray-50 p-3 rounded-lg">
+                <p>${n.note}</p>
+                <p class="text-xs text-gray-400 mt-1">${n.date || new Date(n.created_at).toLocaleDateString()}</p>
+              </div>`).join('')}
+            </div>
+          </div>
+        `;
+      }
+      
+      html += `
+        <div class="flex gap-2 pt-4 border-t">
+          <button onclick="addNotePrompt(${id})" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">+ Add Note</button>
+          <button onclick="addRelationPrompt(${id})" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">+ Add Relation</button>
+          <button onclick="addFollowupPrompt(${id})" class="px-3 py-2 border rounded-lg text-sm hover:bg-gray-50">+ Add Follow-up</button>
+        </div>
+      </div>`;
+      
+      document.getElementById('detail-content').innerHTML = html;
+      document.getElementById('detail-modal').classList.remove('hidden');
+      document.getElementById('detail-modal').classList.add('flex');
+    }
+    
+    function showAddModal() {
+      document.getElementById('modal-title').textContent = 'Add Person';
+      document.getElementById('person-form').reset();
+      document.getElementById('person-id').value = '';
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+    }
+    
+    async function editPerson(id) {
+      const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
+      document.getElementById('modal-title').textContent = 'Edit Person';
+      document.getElementById('person-id').value = id;
+      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','notes'].forEach(f => {
+        document.getElementById(f).value = data[f] || '';
+      });
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('flex');
+    }
+    
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+      document.getElementById('detail-modal').classList.remove('flex');
+    }
+    
+    document.getElementById('person-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('person-id').value;
+      const data = {};
+      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','notes'].forEach(f => {
+        data[f] = document.getElementById(f).value;
+      });
+      
+      if (id) {
+        await fetch(`${API}/api/people/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      } else {
+        await fetch(`${API}/api/people`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      }
+      closeModal();
+      loadPeople();
+      loadStats();
+    };
+    
+    async function addNotePrompt(personId) {
+      const note = prompt('Add a note:');
+      if (note) {
+        await fetch(`${API}/api/people/${personId}/notes`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ note }) });
+        showPerson(personId);
+        loadStats();
+      }
+    }
+    
+    async function addRelationPrompt(personId) {
+      const type = prompt('Relation type (e.g., spouse, child, parent):');
+      if (!type) return;
+      const name = prompt('Name:');
+      if (!name) return;
+      const age = prompt('Age (optional):');
+      await fetch(`${API}/api/people/${personId}/relations`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ relation_type: type, name, age: age ? parseInt(age) : null }) });
+      showPerson(personId);
+    }
+    
+    async function addFollowupPrompt(personId) {
+      const item = prompt('What to follow up on:');
+      if (item) {
+        await fetch(`${API}/api/people/${personId}/followups`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ item }) });
+        showPerson(personId);
+        loadStats();
+      }
+    }
+    
+    async function completeFollowup(id) {
+      await fetch(`${API}/api/followups/${id}/complete`, { method: 'PUT' });
+      loadStats();
+    }
+    
+    document.getElementById('search').oninput = (e) => {
+      loadPeople(e.target.value);
+    };
+    
+    loadStats();
+    loadPeople();
+  </script>
+</body>
+</html>
