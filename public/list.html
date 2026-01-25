@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Personal CRM - List</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  
+  <header class="bg-white border-b sticky top-0 z-10">
+    <div class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="/" class="text-gray-400 hover:text-gray-600">☀️ Solar</a>
+        <h1 class="text-xl font-semibold flex items-center gap-2">📋 List View</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        <input type="text" id="search" placeholder="Search..." 
+               class="px-3 py-2 border rounded-lg text-sm w-48 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <button onclick="showAddModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700">
+          + Add
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-8">
+    <!-- Stats -->
+    <div class="grid grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-blue-600" id="stat-people">0</p>
+        <p class="text-xs text-gray-500 uppercase">People</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-green-600" id="stat-notes">0</p>
+        <p class="text-xs text-gray-500 uppercase">Notes</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-purple-600" id="stat-meetings">0</p>
+        <p class="text-xs text-gray-500 uppercase">Meetings</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-orange-600" id="stat-groups">0</p>
+        <p class="text-xs text-gray-500 uppercase">Groups</p>
+      </div>
+    </div>
+
+    <!-- People List -->
+    <div class="bg-white rounded-xl border">
+      <div id="people-list" class="divide-y">
+        <div class="px-6 py-8 text-center text-gray-400">Loading...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Add/Edit Modal -->
+  <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b flex items-center justify-between">
+        <h3 class="font-semibold" id="modal-title">Add Person</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
+      </div>
+      <form id="person-form" class="px-6 py-4 space-y-4">
+        <input type="hidden" id="person-id">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">First Name *</label>
+            <input type="text" id="first_name" required class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Last Name</label>
+            <input type="text" id="last_name" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Nickname</label>
+            <input type="text" id="nickname" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Relationship</label>
+            <input type="text" id="relationship" placeholder="Friend, Colleague..." class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">How we met</label>
+          <input type="text" id="how_we_met" class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Birthday</label>
+            <input type="date" id="birthday" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Location</label>
+            <input type="text" id="location" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Company</label>
+            <input type="text" id="company" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Job Title</label>
+            <input type="text" id="job_title" class="w-full px-3 py-2 border rounded-lg">
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">School</label>
+          <input type="text" id="school" class="w-full px-3 py-2 border rounded-lg">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Notes</label>
+          <textarea id="notes" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 border rounded-lg hover:bg-gray-50">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Person Detail Modal -->
+  <div id="detail-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+      <div class="px-6 py-4 border-b flex items-center justify-between">
+        <h3 class="font-semibold text-lg" id="detail-name">Person</h3>
+        <div class="flex items-center gap-2">
+          <button onclick="editCurrentPerson()" class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+          <button onclick="deleteCurrentPerson()" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
+          <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
+        </div>
+      </div>
+      <div id="detail-content" class="px-6 py-4">Loading...</div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let currentPersonId = null;
+    
+    function getName(p) {
+      return p.full_name || p.name || [p.first_name, p.last_name].filter(Boolean).join(' ');
+    }
+    
+    async function loadStats() {
+      const stats = await fetch(`${API}/api/stats`).then(r => r.json());
+      document.getElementById('stat-people').textContent = stats.total_people;
+      document.getElementById('stat-notes').textContent = stats.total_notes;
+      document.getElementById('stat-meetings').textContent = stats.total_meetings;
+      document.getElementById('stat-groups').textContent = stats.total_groups || 0;
+    }
+    
+    async function loadPeople(search = '') {
+      const url = search ? `${API}/api/people?search=${encodeURIComponent(search)}` : `${API}/api/people`;
+      const people = await fetch(url).then(r => r.json());
+      const list = document.getElementById('people-list');
+      
+      if (people.length === 0) {
+        list.innerHTML = '<div class="px-6 py-8 text-center text-gray-400">No one yet. Add someone!</div>';
+        return;
+      }
+      
+      list.innerHTML = people.map(p => `
+        <div class="px-6 py-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between" onclick="showPerson(${p.id})">
+          <div>
+            <p class="font-medium">${getName(p)}${p.nickname ? ` <span class="text-gray-400 text-sm">(${p.nickname})</span>` : ''}</p>
+            <p class="text-sm text-gray-500">${[p.relationship, p.company, p.location].filter(Boolean).join(' · ') || ''}</p>
+          </div>
+          ${p.birthday ? `<span class="text-sm text-gray-400">🎂 ${new Date(p.birthday).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>` : ''}
+        </div>
+      `).join('');
+    }
+    
+    async function showPerson(id) {
+      currentPersonId = id;
+      const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
+      const name = getName(data);
+      document.getElementById('detail-name').innerHTML = `${name}${data.age ? ` <span class="text-gray-400 font-normal">(${data.age})</span>` : ''}`;
+      
+      let html = '<div class="space-y-6">';
+      
+      // Basic info
+      const fields = [
+        data.relationship && `<span class="text-gray-500">Relationship:</span> ${data.relationship}`,
+        data.how_we_met && `<span class="text-gray-500">Met:</span> ${data.how_we_met}`,
+        data.birthday && `<span class="text-gray-500">Birthday:</span> ${new Date(data.birthday).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}`,
+        data.location && `<span class="text-gray-500">Location:</span> ${data.location}`,
+        (data.company || data.job_title) && `<span class="text-gray-500">Work:</span> ${[data.job_title, data.company].filter(Boolean).join(' at ')}`,
+        data.school && `<span class="text-gray-500">School:</span> ${data.school}`,
+      ].filter(Boolean);
+      
+      if (fields.length > 0) {
+        html += `<div class="grid grid-cols-2 gap-2 text-sm">${fields.map(f => `<div>${f}</div>`).join('')}</div>`;
+      }
+      
+      // Groups
+      if (data.groups && data.groups.length > 0) {
+        html += `<div class="flex flex-wrap gap-2">
+          ${data.groups.map(g => `<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">${g.name}</span>`).join('')}
+        </div>`;
+      }
+      
+      // Relations
+      const allRelations = [...(data.relations || []), ...(data.reverseRelations || []).map(r => ({
+        ...r, relation_type: r.reverse_type, name: r.from_name, related_person_id: r.from_id
+      }))];
+      
+      if (allRelations.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Family & Relations</h4>
+          <div class="space-y-1 text-sm">
+            ${allRelations.map(r => `
+              <div class="flex items-center gap-2">
+                <span class="text-gray-500 capitalize">${r.relation_type}:</span>
+                ${r.related_person_id || r.linked_id ? 
+                  `<a href="#" onclick="event.preventDefault(); showPerson(${r.related_person_id || r.linked_id})" class="text-blue-600 hover:underline">${r.linked_name || r.name}</a>` : 
+                  `<span>${r.name}</span>`}
+                ${r.age ? `<span class="text-gray-400">(${r.age})</span>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Gift Ideas
+      if (data.giftIdeas && data.giftIdeas.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">🎁 Gift Ideas</h4>
+          <div class="space-y-1 text-sm">
+            ${data.giftIdeas.map(g => `
+              <div class="flex items-center gap-2 ${g.purchased ? 'line-through text-gray-400' : ''}">
+                <span>${g.idea}</span>
+                ${g.occasion ? `<span class="text-gray-400">(${g.occasion})</span>` : ''}
+                ${g.link ? `<a href="${g.link}" target="_blank" class="text-blue-500">🔗</a>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Important Dates
+      if (data.importantDates && data.importantDates.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">📅 Important Dates</h4>
+          <div class="space-y-1 text-sm">
+            ${data.importantDates.map(d => `
+              <div class="flex items-center gap-2">
+                <span class="text-gray-500 capitalize">${d.date_type}:</span>
+                <span>${d.label || ''} ${new Date(d.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Notes
+      if (data.notes && data.notes.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Notes</h4>
+          <div class="space-y-2 text-sm">
+            ${data.notes.map(n => `
+              <div class="bg-gray-50 p-3 rounded-lg">
+                <p>${n.note}</p>
+                <p class="text-xs text-gray-400 mt-1">${n.date || new Date(n.created_at).toLocaleDateString()}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Meetings
+      if (data.meetings && data.meetings.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Meetings</h4>
+          <div class="space-y-2 text-sm">
+            ${data.meetings.map(m => `
+              <div class="bg-blue-50 p-3 rounded-lg">
+                <div class="flex justify-between items-start">
+                  <p class="font-medium">${m.title || 'Meeting'}</p>
+                  ${m.mood ? `<span class="text-xs px-2 py-0.5 bg-white rounded">${m.mood}</span>` : ''}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">${m.meeting_date || ''}${m.location ? ' · ' + m.location : ''}</p>
+                ${m.summary ? `<p class="mt-2 text-gray-700">${m.summary}</p>` : ''}
+                ${m.action_items ? `<p class="mt-1 text-gray-500 text-xs">Action items: ${m.action_items}</p>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Interactions
+      if (data.interactions && data.interactions.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Recent Interactions</h4>
+          <div class="space-y-1 text-sm">
+            ${data.interactions.map(i => `
+              <div class="text-gray-600">
+                <span class="text-gray-400">${i.date}</span> · ${i.interaction_type}${i.notes ? `: ${i.notes}` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Actions
+      html += `
+        <div class="flex flex-wrap gap-2 pt-4 border-t">
+          <button onclick="addNotePrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Note</button>
+          <button onclick="addRelationPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Relation</button>
+          <button onclick="addMeetingPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50 bg-blue-50">+ Meeting</button>
+          <button onclick="addInteractionPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Interaction</button>
+          <button onclick="addGiftPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Gift Idea</button>
+          <button onclick="addDatePrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Date</button>
+        </div>
+      </div>`;
+      
+      document.getElementById('detail-content').innerHTML = html;
+      document.getElementById('detail-modal').classList.remove('hidden');
+      document.getElementById('detail-modal').classList.add('flex');
+    }
+    
+    function editCurrentPerson() {
+      closeDetailModal();
+      editPerson(currentPersonId);
+    }
+    
+    async function deleteCurrentPerson() {
+      if (!confirm('Delete this person?')) return;
+      await fetch(`${API}/api/people/${currentPersonId}`, { method: 'DELETE' });
+      closeDetailModal();
+      loadPeople();
+      loadStats();
+    }
+    
+    function showAddModal() {
+      document.getElementById('modal-title').textContent = 'Add Person';
+      document.getElementById('person-form').reset();
+      document.getElementById('person-id').value = '';
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+    }
+    
+    async function editPerson(id) {
+      const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
+      document.getElementById('modal-title').textContent = 'Edit Person';
+      document.getElementById('person-id').value = id;
+      // Handle both old and new schema
+      document.getElementById('first_name').value = data.first_name || (data.name ? data.name.split(' ')[0] : '') || '';
+      document.getElementById('last_name').value = data.last_name || (data.name ? data.name.split(' ').slice(1).join(' ') : '') || '';
+      ['nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
+        const el = document.getElementById(f);
+        if (el) el.value = data[f] || '';
+      });
+      document.getElementById('modal').classList.remove('hidden');
+      document.getElementById('modal').classList.add('flex');
+    }
+    
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+      document.getElementById('modal').classList.remove('flex');
+    }
+    
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+      document.getElementById('detail-modal').classList.remove('flex');
+    }
+    
+    document.getElementById('person-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('person-id').value;
+      const data = {};
+      ['first_name','last_name','nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
+        const el = document.getElementById(f);
+        if (el) data[f] = el.value;
+      });
+      
+      if (id) {
+        await fetch(`${API}/api/people/${id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      } else {
+        await fetch(`${API}/api/people`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+      }
+      closeModal();
+      loadPeople();
+      loadStats();
+    };
+    
+    async function addNotePrompt(personId) {
+      const note = prompt('Add a note:');
+      if (note) {
+        await fetch(`${API}/api/people/${personId}/notes`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ note }) });
+        showPerson(personId);
+        loadStats();
+      }
+    }
+    
+    async function addRelationPrompt(personId) {
+      const type = prompt('Relation type (spouse, child, parent, sibling, friend):');
+      if (!type) return;
+      const name = prompt('Name:');
+      if (!name) return;
+      const age = prompt('Age (optional):');
+      await fetch(`${API}/api/people/${personId}/relations`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ relation_type: type, name, age: age ? parseInt(age) : null }) 
+      });
+      showPerson(personId);
+      loadStats();
+    }
+    
+    async function addInteractionPrompt(personId) {
+      const type = prompt('Type (coffee, drinks, dinner, call, etc):');
+      if (!type) return;
+      const notes = prompt('Notes (optional):');
+      await fetch(`${API}/api/people/${personId}/interactions`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ interaction_type: type, notes }) 
+      });
+      showPerson(personId);
+    }
+    
+    async function addMeetingPrompt(personId) {
+      const title = prompt('Meeting title (e.g., Coffee catch-up, Dinner):');
+      if (!title) return;
+      const location = prompt('Location:');
+      const summary = prompt('What did you talk about?');
+      const action_items = prompt('Any action items or follow-ups?');
+      const mood = prompt('How did it go? (great, good, okay, awkward):');
+      await fetch(`${API}/api/people/${personId}/meetings`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ title, location, summary, action_items, mood }) 
+      });
+      showPerson(personId);
+    }
+    
+    async function addGiftPrompt(personId) {
+      const idea = prompt('Gift idea:');
+      if (!idea) return;
+      const occasion = prompt('Occasion (birthday, christmas, etc):');
+      const link = prompt('Link (optional):');
+      await fetch(`${API}/api/people/${personId}/gifts`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ idea, occasion, link }) 
+      });
+      showPerson(personId);
+    }
+    
+    async function addDatePrompt(personId) {
+      const date_type = prompt('Date type (anniversary, graduation, work_anniversary):');
+      if (!date_type) return;
+      const date = prompt('Date (YYYY-MM-DD):');
+      if (!date) return;
+      const label = prompt('Label (optional):');
+      await fetch(`${API}/api/people/${personId}/dates`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ date_type, date, label }) 
+      });
+      showPerson(personId);
+    }
+    
+    let searchTimeout;
+    document.getElementById('search').oninput = (e) => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => loadPeople(e.target.value), 200);
+    };
+    
+    loadStats();
+    loadPeople();
+  </script>
+</body>
+</html>
