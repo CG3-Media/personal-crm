@@ -87,8 +87,25 @@ async function initDb() {
       )
     `);
     
+    // Meetings - detailed meeting logs
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS crm_meetings (
+        id SERIAL PRIMARY KEY,
+        person_id INTEGER REFERENCES crm_people(id) ON DELETE CASCADE,
+        title TEXT,
+        meeting_date TEXT,
+        location TEXT,
+        summary TEXT,
+        action_items TEXT,
+        mood TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    
     await client.query(`CREATE INDEX IF NOT EXISTS idx_crm_people_name ON crm_people(name)`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_crm_notes_person ON crm_notes(person_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_crm_meetings_person ON crm_meetings(person_id)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_crm_meetings_date ON crm_meetings(meeting_date)`);
     
     console.log('CRM Database initialized');
   } finally {
@@ -158,8 +175,9 @@ app.get('/api/people/:id', async (req, res) => {
   
   const notes = await queryAll('SELECT * FROM crm_notes WHERE person_id = $1 ORDER BY created_at DESC', [req.params.id]);
   const interactions = await queryAll('SELECT * FROM crm_interactions WHERE person_id = $1 ORDER BY date DESC LIMIT 10', [req.params.id]);
+  const meetings = await queryAll('SELECT * FROM crm_meetings WHERE person_id = $1 ORDER BY meeting_date DESC', [req.params.id]);
   
-  res.json({ ...person, relations, reverseRelations, notes, interactions });
+  res.json({ ...person, relations, reverseRelations, notes, interactions, meetings });
 });
 
 // Briefing endpoint
@@ -292,6 +310,45 @@ app.post('/api/people/:id/interactions', async (req, res) => {
   res.json({ id: result.rows[0].id, success: true });
 });
 
+// ============ Meetings ============
+
+// Get all meetings
+app.get('/api/meetings', async (req, res) => {
+  const meetings = await queryAll(`
+    SELECT m.*, p.name as person_name 
+    FROM crm_meetings m 
+    LEFT JOIN crm_people p ON m.person_id = p.id 
+    ORDER BY m.meeting_date DESC
+  `);
+  res.json(meetings);
+});
+
+// Add a meeting
+app.post('/api/people/:id/meetings', async (req, res) => {
+  const { title, meeting_date, location, summary, action_items, mood } = req.body;
+  const result = await run(
+    'INSERT INTO crm_meetings (person_id, title, meeting_date, location, summary, action_items, mood) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+    [req.params.id, title, meeting_date || getToday(), location, summary, action_items, mood]
+  );
+  res.json({ id: result.rows[0].id, success: true });
+});
+
+// Update a meeting
+app.put('/api/meetings/:id', async (req, res) => {
+  const { title, meeting_date, location, summary, action_items, mood } = req.body;
+  await run(
+    'UPDATE crm_meetings SET title=$1, meeting_date=$2, location=$3, summary=$4, action_items=$5, mood=$6 WHERE id=$7',
+    [title, meeting_date, location, summary, action_items, mood, req.params.id]
+  );
+  res.json({ success: true });
+});
+
+// Delete a meeting
+app.delete('/api/meetings/:id', async (req, res) => {
+  await run('DELETE FROM crm_meetings WHERE id = $1', [req.params.id]);
+  res.json({ success: true });
+});
+
 // Search
 app.get('/api/search', async (req, res) => {
   const q = req.query.q;
@@ -311,13 +368,22 @@ app.get('/api/stats', async (req, res) => {
   const totalPeople = await queryOne('SELECT COUNT(*) as count FROM crm_people');
   const totalNotes = await queryOne('SELECT COUNT(*) as count FROM crm_notes');
   const totalRelations = await queryOne('SELECT COUNT(*) as count FROM crm_relations');
+  const totalMeetings = await queryOne('SELECT COUNT(*) as count FROM crm_meetings');
   const recentInteractions = await queryAll('SELECT * FROM crm_interactions ORDER BY date DESC LIMIT 5');
+  const recentMeetings = await queryAll(`
+    SELECT m.*, p.name as person_name 
+    FROM crm_meetings m 
+    LEFT JOIN crm_people p ON m.person_id = p.id 
+    ORDER BY m.meeting_date DESC LIMIT 5
+  `);
   
   res.json({
     total_people: parseInt(totalPeople.count),
     total_notes: parseInt(totalNotes.count),
     total_relations: parseInt(totalRelations.count),
-    recent_interactions: recentInteractions
+    total_meetings: parseInt(totalMeetings.count),
+    recent_interactions: recentInteractions,
+    recent_meetings: recentMeetings
   });
 });
 

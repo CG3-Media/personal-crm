@@ -216,6 +216,26 @@
         </div>`;
       }
       
+      // Meetings
+      if (data.meetings && data.meetings.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">Meetings</h4>
+          <div class="space-y-2 text-sm">
+            ${data.meetings.map(m => `
+              <div class="bg-blue-50 p-3 rounded-lg">
+                <div class="flex justify-between items-start">
+                  <p class="font-medium">${m.title || 'Meeting'}</p>
+                  ${m.mood ? `<span class="text-xs px-2 py-0.5 bg-white rounded">${m.mood}</span>` : ''}
+                </div>
+                <p class="text-xs text-gray-500 mt-1">${m.meeting_date || ''}${m.location ? ' · ' + m.location : ''}</p>
+                ${m.summary ? `<p class="mt-2 text-gray-700">${m.summary}</p>` : ''}
+                ${m.action_items ? `<p class="mt-1 text-gray-500 text-xs">Action items: ${m.action_items}</p>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
       // Interactions
       if (data.interactions && data.interactions.length > 0) {
         html += `<div>
@@ -235,6 +255,7 @@
         <div class="flex flex-wrap gap-2 pt-4 border-t">
           <button onclick="addNotePrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Note</button>
           <button onclick="addRelationPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Relation</button>
+          <button onclick="addMeetingPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50 bg-blue-50">+ Meeting</button>
           <button onclick="addInteractionPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Interaction</button>
         </div>
       </div>`;
@@ -330,6 +351,21 @@
         method: 'POST', 
         headers: {'Content-Type':'application/json'}, 
         body: JSON.stringify({ interaction_type: type, notes }) 
+      });
+      showPerson(personId);
+    }
+    
+    async function addMeetingPrompt(personId) {
+      const title = prompt('Meeting title (e.g., Coffee catch-up, Dinner):');
+      if (!title) return;
+      const location = prompt('Location:');
+      const summary = prompt('What did you talk about?');
+      const action_items = prompt('Any action items or follow-ups?');
+      const mood = prompt('How did it go? (great, good, okay, awkward):');
+      await fetch(`${API}/api/people/${personId}/meetings`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ title, location, summary, action_items, mood }) 
       });
       showPerson(personId);
     }
