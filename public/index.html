@@ -26,7 +26,7 @@
 
   <main class="max-w-4xl mx-auto px-6 py-8">
     <!-- Stats -->
-    <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="grid grid-cols-4 gap-4 mb-8">
       <div class="bg-white rounded-xl p-4 border text-center">
         <p class="text-2xl font-bold text-blue-600" id="stat-people">0</p>
         <p class="text-xs text-gray-500 uppercase">People</p>
@@ -36,8 +36,12 @@
         <p class="text-xs text-gray-500 uppercase">Notes</p>
       </div>
       <div class="bg-white rounded-xl p-4 border text-center">
-        <p class="text-2xl font-bold text-purple-600" id="stat-relations">0</p>
-        <p class="text-xs text-gray-500 uppercase">Relations</p>
+        <p class="text-2xl font-bold text-purple-600" id="stat-meetings">0</p>
+        <p class="text-xs text-gray-500 uppercase">Meetings</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 border text-center">
+        <p class="text-2xl font-bold text-orange-600" id="stat-groups">0</p>
+        <p class="text-xs text-gray-500 uppercase">Groups</p>
       </div>
     </div>
 
@@ -58,9 +62,15 @@
       </div>
       <form id="person-form" class="px-6 py-4 space-y-4">
         <input type="hidden" id="person-id">
-        <div>
-          <label class="block text-sm font-medium mb-1">Name *</label>
-          <input type="text" id="name" required class="w-full px-3 py-2 border rounded-lg">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">First Name *</label>
+            <input type="text" id="first_name" required class="w-full px-3 py-2 border rounded-lg">
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1">Last Name</label>
+            <input type="text" id="last_name" class="w-full px-3 py-2 border rounded-lg">
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
           <div>
@@ -79,7 +89,7 @@
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1">Birthday</label>
-            <input type="text" id="birthday" placeholder="MM/DD" class="w-full px-3 py-2 border rounded-lg">
+            <input type="date" id="birthday" class="w-full px-3 py-2 border rounded-lg">
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">Location</label>
@@ -119,6 +129,7 @@
         <h3 class="font-semibold text-lg" id="detail-name">Person</h3>
         <div class="flex items-center gap-2">
           <button onclick="editCurrentPerson()" class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+          <button onclick="deleteCurrentPerson()" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
           <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 text-xl">×</button>
         </div>
       </div>
@@ -134,7 +145,8 @@
       const stats = await fetch(`${API}/api/stats`).then(r => r.json());
       document.getElementById('stat-people').textContent = stats.total_people;
       document.getElementById('stat-notes').textContent = stats.total_notes;
-      document.getElementById('stat-relations').textContent = stats.total_relations;
+      document.getElementById('stat-meetings').textContent = stats.total_meetings;
+      document.getElementById('stat-groups').textContent = stats.total_groups;
     }
     
     async function loadPeople(search = '') {
@@ -150,10 +162,10 @@
       list.innerHTML = people.map(p => `
         <div class="px-6 py-4 hover:bg-gray-50 cursor-pointer flex items-center justify-between" onclick="showPerson(${p.id})">
           <div>
-            <p class="font-medium">${p.name}${p.nickname ? ` <span class="text-gray-400 text-sm">(${p.nickname})</span>` : ''}</p>
+            <p class="font-medium">${p.full_name || p.first_name}${p.nickname ? ` <span class="text-gray-400 text-sm">(${p.nickname})</span>` : ''}</p>
             <p class="text-sm text-gray-500">${[p.relationship, p.company, p.location].filter(Boolean).join(' · ') || ''}</p>
           </div>
-          ${p.birthday ? `<span class="text-sm text-gray-400">🎂 ${p.birthday}</span>` : ''}
+          ${p.birthday ? `<span class="text-sm text-gray-400">🎂 ${new Date(p.birthday).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>` : ''}
         </div>
       `).join('');
     }
@@ -161,7 +173,7 @@
     async function showPerson(id) {
       currentPersonId = id;
       const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
-      document.getElementById('detail-name').textContent = data.name;
+      document.getElementById('detail-name').innerHTML = `${data.full_name || data.first_name}${data.age ? ` <span class="text-gray-400 font-normal">(${data.age})</span>` : ''}`;
       
       let html = '<div class="space-y-6">';
       
@@ -169,7 +181,7 @@
       const fields = [
         data.relationship && `<span class="text-gray-500">Relationship:</span> ${data.relationship}`,
         data.how_we_met && `<span class="text-gray-500">Met:</span> ${data.how_we_met}`,
-        data.birthday && `<span class="text-gray-500">Birthday:</span> ${data.birthday}`,
+        data.birthday && `<span class="text-gray-500">Birthday:</span> ${new Date(data.birthday).toLocaleDateString('en-US', {month: 'long', day: 'numeric', year: 'numeric'})}`,
         data.location && `<span class="text-gray-500">Location:</span> ${data.location}`,
         (data.company || data.job_title) && `<span class="text-gray-500">Work:</span> ${[data.job_title, data.company].filter(Boolean).join(' at ')}`,
         data.school && `<span class="text-gray-500">School:</span> ${data.school}`,
@@ -177,6 +189,13 @@
       
       if (fields.length > 0) {
         html += `<div class="grid grid-cols-2 gap-2 text-sm">${fields.map(f => `<div>${f}</div>`).join('')}</div>`;
+      }
+      
+      // Groups
+      if (data.groups && data.groups.length > 0) {
+        html += `<div class="flex flex-wrap gap-2">
+          ${data.groups.map(g => `<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">${g.name}</span>`).join('')}
+        </div>`;
       }
       
       // Relations
@@ -195,6 +214,37 @@
                   `<a href="#" onclick="event.preventDefault(); showPerson(${r.related_person_id || r.linked_id})" class="text-blue-600 hover:underline">${r.linked_name || r.name}</a>` : 
                   `<span>${r.name}</span>`}
                 ${r.age ? `<span class="text-gray-400">(${r.age})</span>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Gift Ideas
+      if (data.giftIdeas && data.giftIdeas.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">🎁 Gift Ideas</h4>
+          <div class="space-y-1 text-sm">
+            ${data.giftIdeas.map(g => `
+              <div class="flex items-center gap-2 ${g.purchased ? 'line-through text-gray-400' : ''}">
+                <span>${g.idea}</span>
+                ${g.occasion ? `<span class="text-gray-400">(${g.occasion})</span>` : ''}
+                ${g.link ? `<a href="${g.link}" target="_blank" class="text-blue-500">🔗</a>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+      }
+      
+      // Important Dates
+      if (data.importantDates && data.importantDates.length > 0) {
+        html += `<div>
+          <h4 class="font-medium mb-2 text-sm text-gray-600 uppercase">📅 Important Dates</h4>
+          <div class="space-y-1 text-sm">
+            ${data.importantDates.map(d => `
+              <div class="flex items-center gap-2">
+                <span class="text-gray-500 capitalize">${d.date_type}:</span>
+                <span>${d.label || ''} ${new Date(d.date).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</span>
               </div>
             `).join('')}
           </div>
@@ -257,6 +307,8 @@
           <button onclick="addRelationPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Relation</button>
           <button onclick="addMeetingPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50 bg-blue-50">+ Meeting</button>
           <button onclick="addInteractionPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Interaction</button>
+          <button onclick="addGiftPrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Gift Idea</button>
+          <button onclick="addDatePrompt(${id})" class="px-3 py-1.5 border rounded-lg text-sm hover:bg-gray-50">+ Date</button>
         </div>
       </div>`;
       
@@ -268,6 +320,14 @@
     function editCurrentPerson() {
       closeDetailModal();
       editPerson(currentPersonId);
+    }
+    
+    async function deleteCurrentPerson() {
+      if (!confirm('Delete this person?')) return;
+      await fetch(`${API}/api/people/${currentPersonId}`, { method: 'DELETE' });
+      closeDetailModal();
+      loadPeople();
+      loadStats();
     }
     
     function showAddModal() {
@@ -282,7 +342,7 @@
       const data = await fetch(`${API}/api/people/${id}`).then(r => r.json());
       document.getElementById('modal-title').textContent = 'Edit Person';
       document.getElementById('person-id').value = id;
-      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
+      ['first_name','last_name','nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
         const el = document.getElementById(f);
         if (el) el.value = data[f] || '';
       });
@@ -304,7 +364,7 @@
       e.preventDefault();
       const id = document.getElementById('person-id').value;
       const data = {};
-      ['name','nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
+      ['first_name','last_name','nickname','relationship','how_we_met','location','birthday','company','job_title','school','notes'].forEach(f => {
         const el = document.getElementById(f);
         if (el) data[f] = el.value;
       });
@@ -366,6 +426,33 @@
         method: 'POST', 
         headers: {'Content-Type':'application/json'}, 
         body: JSON.stringify({ title, location, summary, action_items, mood }) 
+      });
+      showPerson(personId);
+    }
+    
+    async function addGiftPrompt(personId) {
+      const idea = prompt('Gift idea:');
+      if (!idea) return;
+      const occasion = prompt('Occasion (birthday, christmas, etc):');
+      const link = prompt('Link (optional):');
+      await fetch(`${API}/api/people/${personId}/gifts`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ idea, occasion, link }) 
+      });
+      showPerson(personId);
+    }
+    
+    async function addDatePrompt(personId) {
+      const date_type = prompt('Date type (anniversary, graduation, work_anniversary):');
+      if (!date_type) return;
+      const date = prompt('Date (YYYY-MM-DD):');
+      if (!date) return;
+      const label = prompt('Label (optional):');
+      await fetch(`${API}/api/people/${personId}/dates`, { 
+        method: 'POST', 
+        headers: {'Content-Type':'application/json'}, 
+        body: JSON.stringify({ date_type, date, label }) 
       });
       showPerson(personId);
     }
