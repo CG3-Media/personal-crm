@@ -290,7 +290,7 @@
       const list = await fetch(`${API}/api/people`).then(r => r.json());
       
       // Fetch details for each to get interactions/meetings
-      people = await Promise.all(list.map(async p => {
+      let allPeople = await Promise.all(list.map(async p => {
         const details = await fetch(`${API}/api/people/${p.id}`).then(r => r.json());
         return {
           ...details,
@@ -298,6 +298,12 @@
           daysSinceContact: daysSince(getLastContact(details))
         };
       }));
+      
+      // Filter out colleagues - they stay in list view only
+      people = allPeople.filter(p => {
+        const rel = (p.relationship || '').toLowerCase();
+        return !rel.includes('colleague');
+      });
       
       // Apply relationship gravity - connected people inherit proximity
       applyRelationshipGravity();
