@@ -1,11 +1,55 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+
+// Auth token
+const CRM_TOKEN = process.env.CRM_TOKEN || 'eb87a39c2569485c780a719b5a2ea0d86270ab83953c70ae';
+
+// Cookie parser
+app.use((req, res, next) => {
+  req.cookies = {};
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    cookieHeader.split(';').forEach(cookie => {
+      const [name, value] = cookie.trim().split('=');
+      req.cookies[name] = value;
+    });
+  }
+  next();
+});
+
+// Auth route
+app.get('/auth', (req, res) => {
+  const { token } = req.query;
+  if (token === CRM_TOKEN) {
+    res.setHeader('Set-Cookie', `crm_token=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=31536000`);
+    res.redirect('/');
+  } else {
+    res.status(401).send('Invalid token');
+  }
+});
+
+// Auth middleware
+function requireAuth(req, res, next) {
+  if (req.cookies.crm_token === CRM_TOKEN) {
+    next();
+  } else {
+    res.send(`<!DOCTYPE html><html><head><title>CRM - Access Required</title>
+      <style>body{font-family:-apple-system,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#fafafa;}
+      .container{text-align:center;}h1{font-size:48px;margin-bottom:16px;}p{color:#666;font-size:18px;}</style></head>
+      <body><div class="container"><h1>🔒</h1><p>Access via your personal link.</p></div></body></html>`);
+  }
+}
+
+// Protected static files
+app.use(express.static('public', { index: false }));
+app.get('/', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/list.html', requireAuth, (req, res) => res.sendFile(path.join(__dirname, 'public', 'list.html')));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
